@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Life Choices Audit</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: radial-gradient(ellipse at center, #2c003e 0%, #000000 100%);
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow-x: hidden; /* ✅ allow vertical scroll, prevent horizontal scroll */
+    }
+    .stars, .shooting-stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: -1;
+      pointer-events: none;
+    }
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 2s infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 1; }
+    }
+    .shooting-star {
+      position: absolute;
+      width: 150px;
+      height: 2px;
+      background: white;
+      box-shadow: 0 0 6px white;
+      transform: rotate(-45deg);
+      animation: shoot 2s linear infinite;
+    }
+    @keyframes shoot {
+      0% {
+        left: -200px;
+        top: -50px;
+        opacity: 1;
+      }
+      100% {
+        left: 120%;
+        top: 100%;
+        opacity: 0;
+      }
+    }
+    .container {
+      text-align: center;
+      padding: 2rem;
+      z-index: 1;
+      position: relative;
+    }
+    textarea {
+      width: 80%;
+      height: 100px;
+      padding: 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      resize: none;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+    textarea::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1.2rem;
+      border: none;
+      background: #8e44ad;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+        background-color: #6a1b9a;
+    }
+    .audit-output {
+      margin-top: 2rem;
+      font-size: 1.3rem;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 1.5rem;
+      border-radius: 10px;
+      line-height: 1.6;
+      text-align: left;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="shooting-stars"></div>
+
+  <div class="container">
+    <h1>Life Choices Audit 🌌</h1>
+    <p>Enter your questionable decision:</p>
+    <textarea id="confession" placeholder="e.g., I invested in NFTs and now I own a digital potato."></textarea><br />
+    <button onclick="generateAudit()">Audit My Choice</button>
+    <div class="audit-output" id="output"></div>
+  </div>
+
+  <script>
+    async function generateAudit() {
+      const confession = document.getElementById("confession").value;
+      const output = document.getElementById("output");
+      if (!confession.trim()) {
+        output.textContent = "Even silence reveals poor judgment. Try again.";
+        return;
+      }
+
+      output.textContent = "Summoning cosmic judgment...";
+
+      try {
+        const response = await fetch('http://127.0.0.1:5000/audit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ choice: confession }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        output.textContent = data.audit_result;
+      } catch (error) {
+        console.error('Error:', error);
+        output.textContent = "Error: The universe is refusing to audit your choices right now. Is the backend server running?";
+      }
+    }
+
+    function createStars(num) {
+      const starsContainer = document.querySelector('.stars');
+      for (let i = 0; i < num; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+        starsContainer.appendChild(star);
+      }
+    }
+
+    function createShootingStars(num) {
+      const shootingStarsContainer = document.querySelector('.shooting-stars');
+      for (let i = 0; i < num; i++) {
+        const shootingStar = document.createElement('div');
+        shootingStar.classList.add('shooting-star');
+        shootingStar.style.animationDelay = `${Math.random() * 10}s`;
+        shootingStarsContainer.appendChild(shootingStar);
+      }
+    }
+
+    createStars(150);
+    createShootingStars(5);
+  </script>
+</body>
+</html>
