@@ -1,8 +1,8 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template # <-- ADDED render_template
 from flask_cors import CORS
 import google.generativeai as genai
 import os
-from dotenv import load_dotenv # Used to load environment variables from .env file
+from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
@@ -11,20 +11,14 @@ app = Flask(__name__)
 CORS(app) # Enable CORS for all routes
 
 # --- Configure Gemini API ---
-# It's best practice to get the API key from environment variables
-# Make sure you have GEMINI_API_KEY set in your .env file or system environment
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY not found in environment variables. Please set it in a .env file or your system.")
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-# Choose a suitable Gemini model. 'gemini-pro' is good for text-only tasks.
-# 'gemini-1.5-flash' is faster and more cost-effective for many uses.
 MODEL_NAME = "gemini-1.5-flash"
-# MODEL_NAME = "gemini-pro" # You can switch to gemini-pro if you need more reasoning power
 
-# Define the persona for your AI
 SYSTEM_INSTRUCTION = """
 You are 'The Reality Roaster', an AI whose sole purpose is to deliver harsh but funny reality checks and sarcastic roasts about people's choices. 
 Be direct, witty, and slightly cynical, but aim to make them think and reflect. 
@@ -34,12 +28,16 @@ Conclude your response with a clear "Reality check:" followed by practical, ofte
 Keep the language natural, like a smart, sarcastic friend giving tough love.
 """
 
-# --- Initialize Gemini Model ---
-# Using GenerativeModel for flexible interactions
 model = genai.GenerativeModel(
     model_name=MODEL_NAME,
     system_instruction=SYSTEM_INSTRUCTION
 )
+
+# --- NEW ROUTE: Serve the HTML file when the root URL is accessed ---
+@app.route('/')
+def index():
+    # Flask will look for 'useless.html' inside a 'templates' folder
+    return render_template('useless.html') # <-- CHANGED FROM 'index.html' TO 'useless.html'
 
 @app.route('/audit', methods=['POST'])
 def audit_choice():
@@ -50,9 +48,6 @@ def audit_choice():
         return jsonify({"audit_result": "Even silence reveals poor judgment. Try again."}), 400
 
     try:
-        # Generate content using Gemini
-        # We use stream=True and then iterate to get the full response,
-        # which is good practice for potentially longer generations.
         response_stream = model.generate_content(user_choice, stream=True)
         full_response_text = ""
         for chunk in response_stream:
@@ -65,6 +60,4 @@ def audit_choice():
         return jsonify({"audit_result": "Error: My cosmic judgment circuits are malfunctioning. Blame the universe, not your choices."}), 500
 
 if __name__ == '__main__':
-    # For local development, using debug=True means the server reloads on code changes
-    # It also serves on http://127.0.0.1:5000/ by default
     app.run(debug=True)
